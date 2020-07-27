@@ -13,6 +13,12 @@
 #include "Drivers.S32K1xx.GPIO.Enum.h"
 #include "Drivers.S32K1xx.GPIO.Struct.h"
 
+#include "Drivers.S32K1xx.UART.Enum.h"
+#include "Drivers.S32K1xx.UART.Struct.h"
+
+#include "Drivers.S32K1xx.SPI.Enum.h"
+#include "Drivers.S32K1xx.SPI.Struct.h"
+
 #if (defined (__Target_S32K148__))
 #include "Drivers.S32K1xx.Ether.Enum.h"
 #include "Drivers.S32K1xx.Ether.Struct.h"

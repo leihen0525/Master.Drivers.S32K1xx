@@ -61,7 +61,7 @@ typedef enum
 {
 	Drivers_S32K1xx_GPIO_Cmd_GPIO_Mask				=0xFFFF0000,
 
-	Drivers_S32K1xx_GPIO_Cmd_SET_Clock_Enable		=1<<16,
+	//Drivers_S32K1xx_GPIO_Cmd_SET_Clock_Enable		=1<<16,
 
 	Drivers_S32K1xx_GPIO_Cmd_SET_Option				=2<<16,
 

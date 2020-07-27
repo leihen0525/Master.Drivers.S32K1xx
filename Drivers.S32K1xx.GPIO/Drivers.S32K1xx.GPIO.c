@@ -22,8 +22,8 @@ const __Sys_Device_OPS_Type __Device_OPS_GPIO=
 {
 	.Device_Name="GPIO",
 	.Device_Args=Null,
-	.Open=Null,
-	.Close=Null,
+	.Open=Null,//Drivers_S32K1xx_GPIO_Open,
+	.Close=Null,//Drivers_S32K1xx_GPIO_Close,
 	.Read=Null,
 	.Write=Null,
 	.Control=Drivers_S32K1xx_GPIO_Control,
@@ -33,15 +33,74 @@ const __Sys_Device_OPS_Type __Device_OPS_GPIO=
 
 int Drivers_S32K1xx_GPIO_Setup(void)
 {
+	PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC=true;
+	PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC=true;
+	PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC=true;
+	PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC=true;
+	PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC=true;
+
+	if(PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC!=true
+	|| PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC!=true
+	|| PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC!=true
+	|| PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC!=true
+	|| PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC!=true)
+	{
+		return Error_Write_Register_Fault;
+	}
+
 	__Sys_Device_Register_Drivers(&__Device_OPS_GPIO);
 
 	return Error_OK;
 }
+/*
+int Drivers_S32K1xx_GPIO_Open(void *Device_Args,int Mode)
+{
+	PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC=1;
+	PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC=1;
+	PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC=1;
+	PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC=1;
+	PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC=1;
 
+	if(PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC!=1
+	|| PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC!=1
+	|| PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC!=1
+	|| PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC!=1
+	|| PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC!=1)
+	{
+		return Error_Operation_Failed;
+	}
+	else
+	{
+		return Error_OK;
+	}
+}
+int Drivers_S32K1xx_GPIO_Close(void *Device_Args)
+{
+	PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC=0;
+	PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC=0;
+	PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC=0;
+	PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC=0;
+	PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC=0;
+
+	if(PCC->PCCn_BIT[PCC_PORTA_INDEX].CGC!=0
+	|| PCC->PCCn_BIT[PCC_PORTB_INDEX].CGC!=0
+	|| PCC->PCCn_BIT[PCC_PORTC_INDEX].CGC!=0
+	|| PCC->PCCn_BIT[PCC_PORTD_INDEX].CGC!=0
+	|| PCC->PCCn_BIT[PCC_PORTE_INDEX].CGC!=0)
+	{
+		return Error_Operation_Failed;
+	}
+	else
+	{
+		return Error_OK;
+	}
+}
+*/
 int Drivers_S32K1xx_GPIO_Control(void *Device_Args,int Cmd, unsigned long Args)
 {
 	switch (Cmd&Drivers_S32K1xx_GPIO_Cmd_GPIO_Mask)
 	{
+	/*
 		case Drivers_S32K1xx_GPIO_Cmd_SET_Clock_Enable:
 		{
 			uint16_t GPIOx=(Cmd>>8)&0xFF;
@@ -65,7 +124,7 @@ int Drivers_S32K1xx_GPIO_Control(void *Device_Args,int Cmd, unsigned long Args)
 			}
 			return Error_OK;
 		}break;
-
+*/
 		case Drivers_S32K1xx_GPIO_Cmd_SET_Option:
 		{
 			Drivers_S32K1xx_GPIO_Cmd_Option_Type *P_Option=(Drivers_S32K1xx_GPIO_Cmd_Option_Type *)&Args;
@@ -126,7 +185,7 @@ int Drivers_S32K1xx_GPIO_Control(void *Device_Args,int Cmd, unsigned long Args)
 			return Error_OK;
 		}break;
 
-		case  Drivers_S32K1xx_GPIO_Cmd_SET_DDR_Set:
+		case Drivers_S32K1xx_GPIO_Cmd_SET_DDR_Set:
 		{
 			uint16_t GPIOx=(Cmd>>8)&0xFF;
 
@@ -141,7 +200,7 @@ int Drivers_S32K1xx_GPIO_Control(void *Device_Args,int Cmd, unsigned long Args)
 
 		}break;
 
-		case  Drivers_S32K1xx_GPIO_Cmd_SET_DDR_Clear:
+		case Drivers_S32K1xx_GPIO_Cmd_SET_DDR_Clear:
 		{
 			uint16_t GPIOx=(Cmd>>8)&0xFF;
 
