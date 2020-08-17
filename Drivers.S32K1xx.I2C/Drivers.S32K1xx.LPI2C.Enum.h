@@ -19,6 +19,6 @@ typedef enum
 	Drivers_S32K1xx_LPI2C_Clock_Source_SPLLDIV2_CLK			=6,
 #endif
 
-}Drivers_S32K1xx_LPSPI_Clock_Source_Type;
+}Drivers_S32K1xx_LPI2C_Clock_Source_Type;
 
 #endif /* DRIVERS_S32K1XX_LPI2C_ENUM_H_ */

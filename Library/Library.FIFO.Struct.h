@@ -12,19 +12,19 @@
 
 typedef struct
 {
-	uint16_t FIFO_IN				:5;			//队列的进标号
-	uint16_t FIFO_OUT				:5;			//队列的出标号
+	uint16_t FIFO_IN				:6;			//队列的进标号
+	uint16_t FIFO_OUT				:6;			//队列的出标号
 
-	uint8_t DATA[0x20];
+	uint8_t DATA[0x40];
 
 }Library_FIFO_1Byte_DATA_Type;
 
 typedef struct
 {
-	uint16_t FIFO_IN				:5;			//队列的进标号
-	uint16_t FIFO_OUT				:5;			//队列的出标号
+	uint16_t FIFO_IN				:6;			//队列的进标号
+	uint16_t FIFO_OUT				:6;			//队列的出标号
 
-	uint16_t DATA[0x20];
+	uint16_t DATA[0x40];
 
 }Library_FIFO_2Byte_DATA_Type;
 

@@ -33,8 +33,9 @@ typedef struct
 	uint32_t CPOL								:1;
 	uint32_t CPHA								:1;
 	uint32_t LSB_First							:1;
-
+	uint32_t Chip_Select						:2;
 	uint32_t Size								:8;
+
 
 	uint8_t *Tx_DATA;
 	uint8_t *Rx_DATA;

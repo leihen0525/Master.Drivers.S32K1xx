@@ -237,6 +237,19 @@ int Drivers_S32K1xx_LPSPI_GET_Module_Enabled(LPSPI_Type *P_LPSPI)
 	}
 	return P_LPSPI->CR.BIT.MEN;
 }
+int Drivers_S32K1xx_LPSPI_SET_Mode(LPSPI_Type *P_LPSPI,Drivers_S32K1xx_LPSPI_Mode_Type Mode)
+{
+	if(P_LPSPI==Null || Mode>=Drivers_S32K1xx_LPSPI_Mode_End)
+	{
+		return Error_Invalid_Parameter;
+	}
+	P_LPSPI->CFGR1.BIT.MASTER=Mode;
+	if(P_LPSPI->CFGR1.BIT.MASTER!=Mode)
+	{
+		return Error_Write_Register_Fault;
+	}
+	return Error_OK;
+}
 int Drivers_S32K1xx_LPSPI_SET_Function_Enabled(
 		LPSPI_Type *P_LPSPI,
 		Drivers_S32K1xx_LPSPI_Function_Type Function,
@@ -554,4 +567,111 @@ int Drivers_S32K1xx_LPSPI_SET_PIN_Config(LPSPI_Type *P_LPSPI,Drivers_S32K1xx_LPS
 		return Error_Write_Register_Fault;
 	}
 	return Error_OK;
+}
+int Drivers_S32K1xx_LPSPI_SET_FIFO_Watermark(LPSPI_Type *P_LPSPI,uint8_t Receive,uint8_t Transmit)
+{
+	if(P_LPSPI==Null || Receive>3 || Transmit>3)
+	{
+		return Error_Invalid_Parameter;
+	}
+	P_LPSPI->FCR.BIT.RXWATER=Receive;
+	if(P_LPSPI->FCR.BIT.RXWATER!=Receive)
+	{
+		return Error_Write_Register_Fault;
+	}
+
+	P_LPSPI->FCR.BIT.TXWATER=Transmit;
+	if(P_LPSPI->FCR.BIT.TXWATER!=Transmit)
+	{
+		return Error_Write_Register_Fault;
+	}
+	return Error_OK;
+}
+int Drivers_S32K1xx_LPSPI_SET_Transmit_Command(
+		LPSPI_Type *P_LPSPI,
+		bool CPOL,
+		bool CPHA,
+		uint8_t Prescaler,
+		Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_Type Peripheral_Chip_Select,
+		bool LSB_First,
+		bool Byte_Swap,
+		Enabled_Type Continuous_Transfer,
+		bool Continuing_Command,
+		bool Receive_Mask,
+		bool Transmit_Mask,
+		Drivers_S32K1xx_LPSPI_Transfer_Width_Type Transfer_Width,
+		uint16_t Frame_Size)
+{
+	if(P_LPSPI==Null
+	|| CPOL>=bool_End
+	|| CPHA>=bool_End
+	|| Prescaler>7
+	|| Peripheral_Chip_Select>=Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_End
+	|| LSB_First>=bool_End
+	|| Byte_Swap>=bool_End
+	|| Continuous_Transfer>=Enabled_End
+	|| Continuing_Command>=bool_End
+	|| Receive_Mask>=bool_End
+	|| Transmit_Mask>=bool_End
+	|| Transfer_Width>=Drivers_S32K1xx_LPSPI_Transfer_Width_End
+	|| (Frame_Size<8 || Frame_Size>4096))
+	{
+		return Error_Invalid_Parameter;
+	}
+	LPSPI_TCR_Type TCR={.DATA=0};
+
+	TCR.BIT.CPOL=CPOL;
+	TCR.BIT.CPHA=CPHA;
+	TCR.BIT.PRESCALE=Prescaler;
+	TCR.BIT.PCS=Peripheral_Chip_Select;
+	TCR.BIT.LSBF=LSB_First;
+	TCR.BIT.BYSW=Byte_Swap;
+	TCR.BIT.CONT=Continuous_Transfer;
+	TCR.BIT.CONTC=Continuing_Command;
+	TCR.BIT.RXMSK=Receive_Mask;
+	TCR.BIT.TXMSK=Transmit_Mask;
+	TCR.BIT.WIDTH=Transfer_Width;
+	TCR.BIT.FRAMESZ=Frame_Size-1;
+
+	P_LPSPI->TCR.DATA=TCR.DATA;
+
+	if(P_LPSPI->TCR.DATA!=TCR.DATA)
+	{
+		return Error_Write_Register_Fault;
+	}
+	return Error_OK;
+}
+int Drivers_S32K1xx_LPSPI_SET_DATA(LPSPI_Type *P_LPSPI,uint32_t DATA)
+{
+	if(P_LPSPI==Null)
+	{
+		return Error_Invalid_Parameter;
+	}
+	P_LPSPI->TDR=DATA;
+	return Error_OK;
+}
+int Drivers_S32K1xx_LPSPI_GET_DATA(LPSPI_Type *P_LPSPI,uint32_t *DATA)
+{
+	if(P_LPSPI==Null || DATA==Null)
+	{
+		return Error_Invalid_Parameter;
+	}
+	*DATA=P_LPSPI->RDR;
+	return Error_OK;
+}
+int Drivers_S32K1xx_LPSPI_GET_FIFO_TX_COUNT(LPSPI_Type *P_LPSPI)
+{
+	if(P_LPSPI==Null)
+	{
+		return Error_Invalid_Parameter;
+	}
+	return P_LPSPI->FSR.BIT.TXCOUNT;
+}
+int Drivers_S32K1xx_LPSPI_GET_FIFO_RX_COUNT(LPSPI_Type *P_LPSPI)
+{
+	if(P_LPSPI==Null)
+	{
+		return Error_Invalid_Parameter;
+	}
+	return P_LPSPI->FSR.BIT.RXCOUNT;
 }

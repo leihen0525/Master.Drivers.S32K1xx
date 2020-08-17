@@ -19,6 +19,14 @@
 #include "Drivers.S32K1xx.SPI.Enum.h"
 #include "Drivers.S32K1xx.SPI.Struct.h"
 
+#include "Drivers.S32K1xx.I2C.Enum.h"
+#include "Drivers.S32K1xx.I2C.Struct.h"
+
+#include "Drivers.S32K1xx.FlexTimer.Enum.h"
+#include "Drivers.S32K1xx.FlexTimer.Struct.h"
+
+#include "Drivers.S32K1xx.ADC.Enum.h"
+
 #if (defined (__Target_S32K148__))
 #include "Drivers.S32K1xx.Ether.Enum.h"
 #include "Drivers.S32K1xx.Ether.Struct.h"

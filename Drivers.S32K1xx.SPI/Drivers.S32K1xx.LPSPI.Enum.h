@@ -37,6 +37,14 @@ typedef enum
 
 typedef enum
 {
+	Drivers_S32K1xx_LPSPI_Mode_Slave						=0,
+	Drivers_S32K1xx_LPSPI_Mode_Master,
+
+	Drivers_S32K1xx_LPSPI_Mode_End,
+}Drivers_S32K1xx_LPSPI_Mode_Type;
+
+typedef enum
+{
 	Drivers_S32K1xx_LPSPI_Interrupt_Data_Match				=1<<0,
 	Drivers_S32K1xx_LPSPI_Interrupt_Receive_Error			=1<<1,
 	Drivers_S32K1xx_LPSPI_Interrupt_Transmit_Error			=1<<2,
@@ -71,5 +79,24 @@ typedef enum
 
 	Drivers_S32K1xx_LPSPI_PIN_Config_End,
 }Drivers_S32K1xx_LPSPI_PIN_Config_Type;
+
+typedef enum
+{
+	Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_0							=0,
+	Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_1,
+	Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_2,
+	Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_3,
+
+	Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_End,
+}Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_Type;
+
+typedef enum
+{
+	Drivers_S32K1xx_LPSPI_Transfer_Width_1Bit								=0,
+	Drivers_S32K1xx_LPSPI_Transfer_Width_2Bit,
+	Drivers_S32K1xx_LPSPI_Transfer_Width_4Bit,
+
+	Drivers_S32K1xx_LPSPI_Transfer_Width_End,
+}Drivers_S32K1xx_LPSPI_Transfer_Width_Type;
 
 #endif /* DRIVERS_S32K1XX_LPSPI_ENUM_H_ */

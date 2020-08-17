@@ -197,7 +197,10 @@ int Drivers_S32K1xx_SPI_Control(void *Device_Args,int Cmd, unsigned long Args)
 			Error_NoArgs_Return(Err,Drivers_S32K1xx_LPSPI_SET_Function_Enabled((LPSPI_Type *)Device_Args,Drivers_S32K1xx_LPSPI_Function_Debug,Enable));
 
 			//开启设备中断
-			Error_NoArgs_Return(Err,Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled((LPSPI_Type *)Device_Args,Drivers_S32K1xx_LPSPI_Interrupt_Frame_Complete,Enable));
+			//Error_NoArgs_Return(Err,Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled((LPSPI_Type *)Device_Args,Drivers_S32K1xx_LPSPI_Interrupt_Frame_Complete,Enable));
+
+			//设备模块工作模式
+			Error_NoArgs_Return(Err,Drivers_S32K1xx_LPSPI_SET_Mode((LPSPI_Type *)Device_Args,(Drivers_S32K1xx_LPSPI_Mode_Type)P_SPI_Init->Mode));
 
 			//打开模块
 			Error_NoArgs_Return(Err,Drivers_S32K1xx_LPSPI_SET_Module_Enabled((LPSPI_Type *)Device_Args,Enable));
@@ -260,44 +263,126 @@ int Drivers_S32K1xx_SPI_Control(void *Device_Args,int Cmd, unsigned long Args)
 			//Check Busy
 			Error_Args(Err,Drivers_S32K1xx_LPSPI_GET_Interrupt_Flag((LPSPI_Type *)Device_Args))
 			{
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
 			}
 			if((Err&Drivers_S32K1xx_LPSPI_Interrupt_Busy)!=0)
 			{
 				Err=Error_Busy;
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
 			}
 
 
 			//复位FIFO
 			Error_NoArgs(Err,Drivers_S32K1xx_LPSPI_Reset_FIFO((LPSPI_Type *)Device_Args,true,true))
 			{
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
+			}
+			//初始化FIFO队列
+			Error_NoArgs(Err,Library_FIFO_1Byte_FIFO_Init(&Drivers_S32K1xx_SPI_DATA.SPI[Index].TX_FIFO))
+			{
+				goto Exit_SPI_Transmit_Cmd;
+			}
+			Error_NoArgs(Err,Library_FIFO_1Byte_FIFO_Init(&Drivers_S32K1xx_SPI_DATA.SPI[Index].RX_FIFO))
+			{
+				goto Exit_SPI_Transmit_Cmd;
+			}
+
+			Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size=P_Transmit_Cmd->Size;
+
+			if(P_Transmit_Cmd!=Null)
+			{
+				Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size=P_Transmit_Cmd->Size;
+			}
+			else
+			{
+				Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size=0;
+			}
+
+
+			for(int i=0;i<P_Transmit_Cmd->Size;i++)
+			{
+				Error_NoArgs(Err,Library_FIFO_1Byte_FIFO_IN(&Drivers_S32K1xx_SPI_DATA.SPI[Index].TX_FIFO,P_Transmit_Cmd->Tx_DATA[i]))
+				{
+					goto Exit_SPI_Transmit_Cmd;
+				}
+			}
+
+			//创建命令字
+			Error_NoArgs(Err,Drivers_S32K1xx_LPSPI_SET_Transmit_Command(
+					(LPSPI_Type *)Device_Args,
+					(bool)P_Transmit_Cmd->CPOL,
+					(bool)P_Transmit_Cmd->CPHA,
+					6,
+					(Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_Type)P_Transmit_Cmd->Chip_Select,
+					(bool)P_Transmit_Cmd->LSB_First,
+					false,//交换一下大段小段存储
+					Disable,
+					false,
+					false,
+					false,
+					Drivers_S32K1xx_LPSPI_Transfer_Width_1Bit,
+					P_Transmit_Cmd->Size*8
+					))
+			{
+				goto Exit_SPI_Transmit_Cmd;
 			}
 /*
 			//The second flush command is used to avoid the case when one word is still in shifter
 			Error_NoArgs(Err,Drivers_S32K1xx_LPSPI_Reset_FIFO((LPSPI_Type *)Device_Args,true,true))
 			{
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
 			}
 */
-
+			Error_NoArgs(Err,Drivers_S32K1xx_LPSPI_SET_FIFO_Watermark((LPSPI_Type *)Device_Args,0,2))
+			{
+				goto Exit_SPI_Transmit_Cmd;
+			}
 
 			Error_NoArgs(Err,__Sys_Event_Flag_Clear(Drivers_S32K1xx_SPI_DATA.SPI[Index].Event_Flag))
 			{
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
 			}
 
-
+			//打开发送数据中断
+			Error_NoArgs(Err,Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled((LPSPI_Type *)Device_Args,Drivers_S32K1xx_LPSPI_Interrupt_Transmit_Data,Enable))
+			{
+				goto Exit_SPI_Transmit_Cmd;
+			}
+			//等待数据发送完成
 			Error_NoArgs(Err,__Sys_Event_Flag_Wait(Drivers_S32K1xx_SPI_DATA.SPI[Index].Event_Flag,P_Transmit_Cmd->TimeOut))
 			{
-				goto Exit_Transmit_Cmd;
+				goto Exit_SPI_Transmit_Cmd;
+			}
+
+			if(P_Transmit_Cmd->Rx_DATA!=Null)
+			{
+				uint8_t Rx_DATA;
+				int i=0;
+				for(;i<P_Transmit_Cmd->Size;i++)
+				{
+					Err=Library_FIFO_1Byte_FIFO_OUT(&Drivers_S32K1xx_SPI_DATA.SPI[Index].RX_FIFO,&Rx_DATA);
+					if(Err==Error_OK)
+					{
+						P_Transmit_Cmd->Rx_DATA[i]=Rx_DATA;
+					}
+					else if(Err==Error_Empty)
+					{
+						Err=Error_Unknown;
+						goto Exit_SPI_Transmit_Cmd;
+					}
+					else
+					{
+						Err=Error_Unknown;
+						goto Exit_SPI_Transmit_Cmd;
+					}
+				}
 			}
 
 
 
+			Err=Error_OK;
 
-Exit_Transmit_Cmd:
+Exit_SPI_Transmit_Cmd:
 
 			Error_NoArgs_Return(Temp_Err,__Sys_Semaphore_Release(Drivers_S32K1xx_SPI_DATA.SPI[Index].Semaphore,1,Null));
 
@@ -338,6 +423,7 @@ int Drivers_S32K1xx_SPI_GET_Count(void *Device_Args)
 	}
 }
 //----------------------------------------------------------------------------------------------------
+
 void Drivers_S32K1xx_SPI_IRQ(void *Args,int IRQ_Index)
 {
 	int Err;
@@ -370,6 +456,12 @@ void Drivers_S32K1xx_SPI_IRQ(void *Args,int IRQ_Index)
 	if((Flag&Drivers_S32K1xx_LPSPI_Interrupt_Transfer_Complete)!=0)
 	{
 		Flag_Clear=Flag_Clear|Drivers_S32K1xx_LPSPI_Interrupt_Transfer_Complete;
+
+		if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size==0)
+		{
+			Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled(P_SPI,Drivers_S32K1xx_LPSPI_Interrupt_Transfer_Complete,Disable);
+		}
+
 	}
 
 	if((Flag&Drivers_S32K1xx_LPSPI_Interrupt_Frame_Complete)!=0)
@@ -384,19 +476,155 @@ void Drivers_S32K1xx_SPI_IRQ(void *Args,int IRQ_Index)
 
 	if((Flag&Drivers_S32K1xx_LPSPI_Interrupt_Receive_Data)!=0)
 	{
+		uint32_t Temp_Rx_DATA=0x00;
+		uint8_t *P_Temp_Rx_DATA=(uint8_t *)&Temp_Rx_DATA;
+		uint8_t Rx_Byte_DATA[4];
+		if(Drivers_S32K1xx_LPSPI_GET_DATA(P_SPI,&Temp_Rx_DATA)==Error_OK)
+		{
+			int Rx_Index;
+			if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size>=4)
+			{
+				Rx_Index=4;
+			}
+			else
+			{
+				Rx_Index=Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size;
+			}
+			switch (Rx_Index)
+			{
+				case 1:
+				{
+					Rx_Byte_DATA[0]=P_Temp_Rx_DATA[0];
+				}break;
+				case 2:
+				{
+					Rx_Byte_DATA[0]=P_Temp_Rx_DATA[1];
+					Rx_Byte_DATA[1]=P_Temp_Rx_DATA[0];
+				}break;
+				case 3:
+				{
+					Rx_Byte_DATA[0]=P_Temp_Rx_DATA[2];
+					Rx_Byte_DATA[1]=P_Temp_Rx_DATA[1];
+					Rx_Byte_DATA[2]=P_Temp_Rx_DATA[0];
+				}break;
+				case 4:
+				{
+					Rx_Byte_DATA[0]=P_Temp_Rx_DATA[3];
+					Rx_Byte_DATA[1]=P_Temp_Rx_DATA[2];
+					Rx_Byte_DATA[2]=P_Temp_Rx_DATA[1];
+					Rx_Byte_DATA[3]=P_Temp_Rx_DATA[0];
+				}break;
 
+				default:
+					break;
+			}
+			for(int i=0;i<Rx_Index;i++)
+			{
+				if(Library_FIFO_1Byte_FIFO_IN(&Drivers_S32K1xx_SPI_DATA.SPI[Index].RX_FIFO,Rx_Byte_DATA[i])!=Error_OK)
+				{
+					break;
+				}
+			}
+			Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size=Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size-Rx_Index;
+		}
 	}
 
 	if((Flag&Drivers_S32K1xx_LPSPI_Interrupt_Transmit_Data)!=0)
 	{
+		if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size!=0)
+		{
 
+			uint32_t Temp_Tx_DATA=0x00;
+			uint8_t *P_Temp_Tx_DATA=(uint8_t *)&Temp_Tx_DATA;
+			uint8_t Temp_Byte_Tx[4];
+			int i=0;
+			for(;i<4;i++)
+			{
+				if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size!=0)
+				{
+					Err=Library_FIFO_1Byte_FIFO_OUT(&Drivers_S32K1xx_SPI_DATA.SPI[Index].TX_FIFO,&Temp_Byte_Tx[i]);
+					if(Err==Error_OK)
+					{
+
+					}
+					else if(Err==Error_Empty)
+					{
+
+					}
+					else
+					{
+
+					}
+				}
+				else
+				{
+					Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled(P_SPI,Drivers_S32K1xx_LPSPI_Interrupt_Transmit_Data,Disable);
+					Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled(P_SPI,Drivers_S32K1xx_LPSPI_Interrupt_Transfer_Complete,Enable);
+					break;
+				}
+				Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size--;
+			}
+			switch (i)
+			{
+				case 1:
+				{
+					P_Temp_Tx_DATA[0]=Temp_Byte_Tx[0];
+				}break;
+				case 2:
+				{
+					P_Temp_Tx_DATA[1]=Temp_Byte_Tx[0];
+					P_Temp_Tx_DATA[0]=Temp_Byte_Tx[1];
+				}break;
+				case 3:
+				{
+					P_Temp_Tx_DATA[2]=Temp_Byte_Tx[0];
+					P_Temp_Tx_DATA[1]=Temp_Byte_Tx[1];
+					P_Temp_Tx_DATA[0]=Temp_Byte_Tx[2];
+				}break;
+				case 4:
+				{
+					P_Temp_Tx_DATA[3]=Temp_Byte_Tx[0];
+					P_Temp_Tx_DATA[2]=Temp_Byte_Tx[1];
+					P_Temp_Tx_DATA[1]=Temp_Byte_Tx[2];
+					P_Temp_Tx_DATA[0]=Temp_Byte_Tx[3];
+				}break;
+
+				default:
+					break;
+			}
+			//Temp_Tx_DATA=0x00FD0000;
+			if(Drivers_S32K1xx_LPSPI_SET_DATA(P_SPI,Temp_Tx_DATA)==Error_OK)
+			{
+
+			}
+			else
+			{
+
+			}
+
+
+			Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled(P_SPI,Drivers_S32K1xx_LPSPI_Interrupt_Receive_Data,Enable);
+		}
 	}
 
 	if((Flag&Drivers_S32K1xx_LPSPI_Interrupt_Busy)!=0)
 	{
 
 	}
+
+	if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size==0)
+	{
+		Drivers_S32K1xx_LPSPI_SET_Interrupt_Enabled(P_SPI,Drivers_S32K1xx_LPSPI_Interrupt_Receive_Data,Disable);
+	}
+
 	Drivers_S32K1xx_LPSPI_Clear_Interrupt_Flag(P_SPI,(Drivers_S32K1xx_LPSPI_Interrupt_Type)Flag_Clear);
+
+	if(Drivers_S32K1xx_SPI_DATA.SPI[Index].Rx_FIFO_Size==0
+	&& Drivers_S32K1xx_SPI_DATA.SPI[Index].Tx_FIFO_Size==0
+	&& (Flag&Drivers_S32K1xx_LPSPI_Interrupt_Transfer_Complete)!=0)
+	{
+		__Sys_Event_Flag_Set(Drivers_S32K1xx_SPI_DATA.SPI[Index].Event_Flag);
+	}
 
 }
 __Sys_Device_Module_Init_Export(Drivers_S32K1xx_SPI_Setup);

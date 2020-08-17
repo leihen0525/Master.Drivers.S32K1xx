@@ -41,8 +41,10 @@ typedef enum
 
 typedef enum
 {
-	Drivers_S32K1xx_SPI_Init_Mode_Master							=0,
-	Drivers_S32K1xx_SPI_Init_Mode_Slave,
+	Drivers_S32K1xx_SPI_Init_Mode_Slave								=0,
+	Drivers_S32K1xx_SPI_Init_Mode_Master,
+
+	Drivers_S32K1xx_SPI_Init_Mode_End,
 }Drivers_S32K1xx_SPI_Init_Mode_Type;
 
 typedef enum

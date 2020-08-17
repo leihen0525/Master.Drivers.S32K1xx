@@ -30,6 +30,8 @@ int Drivers_S32K1xx_LPSPI_SET_Module_Enabled(LPSPI_Type *P_LPSPI,Enabled_Type En
 
 int Drivers_S32K1xx_LPSPI_GET_Module_Enabled(LPSPI_Type *P_LPSPI);
 
+int Drivers_S32K1xx_LPSPI_SET_Mode(LPSPI_Type *P_LPSPI,Drivers_S32K1xx_LPSPI_Mode_Type Mode);
+
 int Drivers_S32K1xx_LPSPI_SET_Function_Enabled(
 		LPSPI_Type *P_LPSPI,
 		Drivers_S32K1xx_LPSPI_Function_Type Function,
@@ -59,6 +61,30 @@ int Drivers_S32K1xx_LPSPI_SET_Clock_Configuration(
 		uint8_t SCK_Divider);
 
 int Drivers_S32K1xx_LPSPI_SET_PIN_Config(LPSPI_Type *P_LPSPI,Drivers_S32K1xx_LPSPI_PIN_Config_Type Pin);
+
+int Drivers_S32K1xx_LPSPI_SET_FIFO_Watermark(LPSPI_Type *P_LPSPI,uint8_t Receive,uint8_t Transmit);
+
+int Drivers_S32K1xx_LPSPI_SET_Transmit_Command(
+		LPSPI_Type *P_LPSPI,
+		bool CPOL,
+		bool CPHA,
+		uint8_t Prescaler,
+		Drivers_S32K1xx_LPSPI_Peripheral_Chip_Select_Type Peripheral_Chip_Select,
+		bool LSB_First,
+		bool Byte_Swap,
+		Enabled_Type Continuous_Transfer,
+		bool Continuing_Command,
+		bool Receive_Mask,
+		bool Transmit_Mask,
+		Drivers_S32K1xx_LPSPI_Transfer_Width_Type Transfer_Width,
+		uint16_t Frame_Size);
+
+int Drivers_S32K1xx_LPSPI_SET_DATA(LPSPI_Type *P_LPSPI,uint32_t DATA);
+
+int Drivers_S32K1xx_LPSPI_GET_DATA(LPSPI_Type *P_LPSPI,uint32_t *DATA);
+
+int Drivers_S32K1xx_LPSPI_GET_FIFO_TX_COUNT(LPSPI_Type *P_LPSPI);
+int Drivers_S32K1xx_LPSPI_GET_FIFO_RX_COUNT(LPSPI_Type *P_LPSPI);
 
 
 #endif /* DRIVERS_S32K1XX_LPSPI_H_ */
