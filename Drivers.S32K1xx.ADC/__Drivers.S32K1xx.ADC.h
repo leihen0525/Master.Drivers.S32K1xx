@@ -19,4 +19,9 @@ int Drivers_S32K1xx_ADC_SET_Clock_Source_Enabled(
 		Enabled_Type Enabled,
 		S32K1xx_Clock_Tree_Type *Tree);
 
+int Drivers_S32K1xx_ADC_SET_AutoCalibration(ADC_Type *P_ADC);
+int Drivers_S32K1xx_ADC_Init(ADC_Type *P_ADC);
+int Drivers_S32K1xx_ADC_GET_Channel_DATA(ADC_Type *P_ADC,uint8_t Channel,uint32_t *DATA);
+
+
 #endif /* __DRIVERS_S32K1XX_ADC_H_ */
